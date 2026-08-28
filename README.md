@@ -1,20 +1,27 @@
 # Social App (React + Vite)
 
-A modern social feed application built with React, React Router, and Tailwind CSS. The app features an in-memory simulated database layer designed to mirror MongoDB/Mongoose schemas for straightforward migration to a production backend.
+A modern social feed application built with React, React Router, and Tailwind CSS. The app features authentication, user-linked posts, protected routes, interactive likes/bookmarks, and an in-memory simulated database layer designed to mirror MongoDB/Mongoose schemas for straightforward migration to a production backend.
 
 ---
 
 ## 📌 Features
 
-- **Feed & Post Browsing**: View recent posts with responsive layouts, media cards, and populated author profiles.
-- **Detailed Post View**: Inspect individual post details with dynamic route matching (`/post/:id`).
-- **User-Specific Post Interactions**:
-  - `isLiked`: Tracks whether the authenticated user has liked a post (backed by an array of user IDs).
-  - `isSaved`: Tracks bookmarks per user (backed by `savedBy` user ID array).
+- **Authentication & Protected Routes**:
+  - Sign Up (Registration) with name, username, email, password, and bio.
+  - Log In with email/password validation.
+  - **Auth Redirects & Protected Routes (`<ProtectedRoute>`)**: Automatically redirects unauthenticated guests to `/login` when accessing protected pages (e.g. `/create-post`).
+  - Active session handling via **React Context API** (`AuthContext`) and custom `useAuth()` hook.
+  - Top Navigation profile badge (avatar, user name, and logout button).
+- **Feed & Post Browsing**:
+  - View recent posts with responsive cards, media previews, and author metadata.
+  - Detailed Post view with dynamic route matching (`/post/:id`).
+- **Interactive Post Actions**:
+  - `isLiked`: Tracks whether the active user liked a post (backed by user IDs array).
+  - `isSaved`: Tracks personal bookmarks.
   - Real-time like counter updates.
-- **User-Post Relational Linking**: Posts reference `userId` as their foreign author key, which is automatically populated with user metadata (`name`, `username`, `avatarUrl`).
-- **In-Memory Simulated Database (`api.js`)**: Real async Promise-based API emulation with latency simulation (`FAKE_DELAY`), mutable state, and full CRUD operations for Users and Posts.
-- **MongoDB / Mongoose Schema Ready**: Normalized data models equipped with timestamps, relational IDs, and standard field types.
+  - Commenting system per post with user attribution.
+- **Relational Data Modeling**: Posts and comments link directly to `userId` foreign keys and populate author information.
+- **MongoDB / Mongoose Schema Ready**: Production-grade schemas equipped with password hashes, timestamps, and relational ObjectIds.
 
 ---
 
@@ -44,39 +51,126 @@ npm run dev
 
 The app will be accessible at `http://localhost:5173`.
 
-### Building for Production
+### Demo Login Accounts
 
-```bash
-# Create production build in dist/
-npm run build
+| Name | Email | Password |
+|---|---|---|
+| **Thura** | `thura@example.com` | `password123` |
+| **May Thin** | `maythin@example.com` | `password123` |
+| **Zaw Min** | `zawmin@example.com` | `password123` |
 
-# Preview production build locally
-npm run preview
+---
+
+## 🛡️ Protected Route & Auth Redirect Logic
+
+### 1. `ProtectedRoute.jsx` (`src/components/ProtectedRoute.jsx`)
+A clean wrapper component for routes requiring authentication:
+
+```jsx
+import { Navigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
+
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div className="text-center p-8 text-gray-500">Loading...</div>;
+  }
+
+  // If not logged in, redirect to login page
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+export default ProtectedRoute;
+```
+
+### 2. Route Configuration in `App.jsx`
+
+```jsx
+<Routes>
+  <Route path="/" element={<Home />} />
+  <Route
+    path="/create-post"
+    element={
+      <ProtectedRoute>
+        <CreatePost />
+      </ProtectedRoute>
+    }
+  />
+  <Route path="/post/:id" element={<DetailPost />} />
+  <Route path="/login" element={<Login />} />
+  <Route path="/signup" element={<Signup />} />
+</Routes>
+```
+
+---
+
+## 🔐 Authentication Architecture (Context API & Custom Hook)
+
+### `AuthContext.jsx` (`src/context/AuthContext.jsx`)
+Provides global authentication state to all components in the React tree:
+
+```jsx
+import { createContext, useContext, useEffect, useState } from "react";
+import { getCurrentUser, login as apiLogin, register as apiRegister, logout as apiLogout } from "../services/api";
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadAuth() {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+      setIsLoading(false);
+    }
+    loadAuth();
+  }, []);
+
+  async function login(email, password) {
+    const loggedInUser = await apiLogin(email, password);
+    setUser(loggedInUser);
+    return loggedInUser;
+  }
+
+  async function signup(userData) {
+    const newUser = await apiRegister(userData);
+    setUser(newUser);
+    return newUser;
+  }
+
+  async function logout() {
+    await apiLogout();
+    setUser(null);
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout }}>
+      {!isLoading && children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
 ```
 
 ---
 
 ## 🗄️ Data Architecture & Mongoose Schemas
 
-All simulated database operations are encapsulated in [`src/services/api.js`](file:///media/thura/DATA/My%20Folders/Code%20with%20Thura/Courses/Fullstack%20Live%20Class/Projects/Vite%20Project/social-app/src/services/api.js).
+All simulated database operations are defined in [`src/services/api.js`](file:///media/thura/DATA/My%20Folders/Code%20with%20Thura/Courses/Fullstack%20Live%20Class/Projects/Vite%20Project/social-app/src/services/api.js).
 
 ---
 
 ### 1. Users Model (`models/User.js`)
-
-#### Simulated Document:
-```javascript
-{
-  id: 1, // Will map to _id (ObjectId) in MongoDB
-  name: "Aung Ko",
-  username: "aungko",
-  email: "aungko@example.com",
-  avatarUrl: "https://i.pravatar.cc/150?u=aungko",
-  bio: "Passionate React & Node.js Developer.",
-  createdAt: "2026-08-01T08:00:00.000Z",
-  updatedAt: "2026-08-01T08:00:00.000Z"
-}
-```
 
 #### Production Mongoose Schema:
 ```javascript
@@ -103,6 +197,11 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    password: {
+      type: String,
+      required: [true, "Password is required"],
+      minlength: 6,
+    },
     avatarUrl: {
       type: String,
       default: "",
@@ -123,32 +222,6 @@ export default mongoose.models.User || mongoose.model("User", UserSchema);
 ---
 
 ### 2. Posts Model (`models/Post.js`)
-
-Posts are linked to Users via `userId` (author reference) and track user likes via a `likes` array of User ObjectIds (`$addToSet` / `$pull`).
-
-#### Simulated Document:
-```javascript
-{
-  id: 1,
-  userId: 1, // References User.id
-  author: {
-    id: 1,
-    name: "Aung Ko",
-    username: "aungko",
-    avatarUrl: "https://i.pravatar.cc/150?u=aungko"
-  },
-  title: "Getting Started with React",
-  body: "React is a JavaScript library for building user interfaces...",
-  imageUrl: "https://picsum.photos/seed/react-intro/600/350",
-  likes: [2, 3, 4], // Array of User IDs who liked this post
-  likesCount: 3,
-  isLiked: false,   // Computed: likes.includes(CURRENT_USER_ID)
-  savedBy: [1],     // Array of User IDs who saved this post
-  isSaved: true,    // Computed: savedBy.includes(CURRENT_USER_ID)
-  createdAt: "2026-08-20T10:00:00.000Z",
-  updatedAt: "2026-08-20T10:00:00.000Z"
-}
-```
 
 #### Production Mongoose Schema:
 ```javascript
@@ -205,73 +278,31 @@ export default mongoose.models.Post || mongoose.model("Post", PostSchema);
 
 ---
 
-### 3. Comments Model (`models/Comment.js`)
+## 🛠️ Project Structure
 
-#### Production Mongoose Schema:
-```javascript
-import mongoose from "mongoose";
-
-const CommentSchema = new mongoose.Schema(
-  {
-    postId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Post",
-      required: true,
-      index: true,
-    },
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      trim: true,
-      lowercase: true,
-    },
-    body: {
-      type: String,
-      required: true,
-    },
-  },
-  {
-    timestamps: true,
-  }
-);
-
-export default mongoose.models.Comment || mongoose.model("Comment", CommentSchema);
+```text
+social-app/
+├── public/
+├── src/
+│   ├── components/
+│   │   ├── CommentSession.jsx  # Comments list & submission form
+│   │   ├── Navbar.jsx          # Top navigation with auth & profile badge
+│   │   ├── PostCard.jsx        # Post card with like/save/comment triggers
+│   │   └── ProtectedRoute.jsx  # Auth redirect wrapper for protected routes
+│   ├── context/
+│   │   └── AuthContext.jsx     # Authentication Context & useAuth custom hook
+│   ├── pages/
+│   │   ├── CreatePost.jsx      # Protected Post creation form
+│   │   ├── DetailPost.jsx      # Post detail view + comments
+│   │   ├── Home.jsx            # Feed / Recent posts page
+│   │   ├── Login.jsx           # Simple Login page (auto-redirects if logged in)
+│   │   └── Signup.jsx          # Simple Sign Up page (auto-redirects if logged in)
+│   ├── services/
+│   │   └── api.js              # In-memory DB, Auth, and async API layer
+│   ├── App.jsx                 # Main router, ProtectedRoute, & AuthProvider wrapper
+│   ├── main.jsx                # DOM mounting
+│   └── index.css               # Global Tailwind CSS styles
+├── package.json
+├── vite.config.js
+└── README.md
 ```
-
----
-
-## 🔌 API Service Interface (`src/services/api.js`)
-
-### Posts & Likes API
-
-| Function | Parameters | Return Type | Description |
-|---|---|---|---|
-| `getPosts(currentUserId?)` | `currentUserId = 1` | `Promise<Array<Post>>` | Fetches all posts with populated authors & `isLiked`/`isSaved` |
-| `getPostById(id, currentUserId?)` | `id, currentUserId = 1` | `Promise<Post \| null>` | Fetches single post with populated author & user state |
-| `getPostsByUserId(userId, currentUserId?)` | `userId, currentUserId = 1` | `Promise<Array<Post>>` | Fetches posts written by specific author |
-| `createPost(postData, authorUserId?)` | `postData, authorUserId = 1` | `Promise<Post>` | Creates a post linked to an author user |
-| `toggleLikePost(postId, userId?)` | `postId, userId = 1` | `Promise<Post \| null>` | Toggles user like ($addToSet / $pull) |
-| `updatePostLikes(postId, delta, userId?)` | `postId, delta, userId = 1` | `Promise<Post \| null>` | Increments/decrements user like status |
-| `likePost(postId, userId?)` | `postId, userId = 1` | `Promise<Post \| null>` | Adds user like to post |
-| `unlikePost(postId, userId?)` | `postId, userId = 1` | `Promise<Post \| null>` | Removes user like from post |
-| `toggleSavePost(postId, userId?, status?)` | `postId, userId = 1, status?` | `Promise<Post \| null>` | Toggles user bookmark/saved status |
-
-### Users CRUD API
-
-| Function | Parameters | Return Type | Description |
-|---|---|---|---|
-| `getUsers()` | None | `Promise<Array<User>>` | (Read All) Fetches all users |
-| `getUserById(id)` | `id: number \| string` | `Promise<User \| null>` | (Read One) Fetches user by ID |
-| `createUser(userData)` | `userData: Object` | `Promise<User>` | (Create) Creates a new user |
-| `updateUser(id, updateData)` | `id, updateData: Object` | `Promise<User \| null>` | (Update) Updates user fields |
-| `deleteUser(id)` | `id: number \| string` | `Promise<{ success, deletedUser }>` | (Delete) Deletes user by ID |

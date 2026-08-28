@@ -6,21 +6,22 @@
  * for seamless future migration to a real production database.
  */
 
-// Simulated Logged-In User ID (Session / Auth context)
-export const CURRENT_USER_ID = 1;
+// Simulated Session State (Active Logged-In User ID)
+export let CURRENT_USER_ID = null;
 
 // ==========================================
 // 1. Simulated In-Memory Database Collections
 // ==========================================
 
-// Collection: Users
+// Collection: Users (Mongoose User Model representation)
 let users = [
   {
     id: 1,
     name: "Thura",
     username: "thura",
     email: "thura@example.com",
-    avatarUrl: "https://i.pravatar.cc/150?u=thura",
+    password: "password123", // In MongoDB/Mongoose: Hashed with bcrypt
+    avatarUrl: "https://i.pravatar.cc/150?img=68",
     bio: "Passionate React & Node.js Developer.",
     createdAt: "2026-08-01T08:00:00.000Z",
     updatedAt: "2026-08-01T08:00:00.000Z",
@@ -30,6 +31,7 @@ let users = [
     name: "May Thin",
     username: "maythin",
     email: "maythin@example.com",
+    password: "password123",
     avatarUrl: "https://i.pravatar.cc/150?u=maythin",
     bio: "Frontend UI/UX enthusiast and technical writer.",
     createdAt: "2026-08-02T09:00:00.000Z",
@@ -40,6 +42,7 @@ let users = [
     name: "Zaw Min",
     username: "zawmin",
     email: "zawmin@example.com",
+    password: "password123",
     avatarUrl: "https://i.pravatar.cc/150?u=zawmin",
     bio: "Fullstack engineer passionate about clean architecture.",
     createdAt: "2026-08-03T10:00:00.000Z",
@@ -50,6 +53,7 @@ let users = [
     name: "Hla Hla",
     username: "hlahla",
     email: "hlahla@example.com",
+    password: "password123",
     avatarUrl: "https://i.pravatar.cc/150?u=hlahla",
     bio: "Mobile and Single Page Application enthusiast.",
     createdAt: "2026-08-04T11:00:00.000Z",
@@ -60,6 +64,7 @@ let users = [
     name: "Kyaw Thu",
     username: "kyawthu",
     email: "kyawthu@example.com",
+    password: "password123",
     avatarUrl: "https://i.pravatar.cc/150?u=kyawthu",
     bio: "Software Architect & Tech Instructor.",
     createdAt: "2026-08-05T12:00:00.000Z",
@@ -70,6 +75,7 @@ let users = [
     name: "Su Su",
     username: "susu",
     email: "susu@example.com",
+    password: "password123",
     avatarUrl: "https://i.pravatar.cc/150?u=susu",
     bio: "React and Next.js Frontend Developer.",
     createdAt: "2026-08-06T13:00:00.000Z",
@@ -81,37 +87,37 @@ let users = [
 let posts = [
   {
     id: 1,
-    userId: 1, // References User.id (Mongoose: ObjectId ref: 'User')
+    userId: 1, // References User.id
     title: "Getting Started with React",
     body: "React is a JavaScript library for building user interfaces. It lets you create reusable components that manage their own state, then compose them to make complex UIs. React uses a virtual DOM to efficiently update the real DOM when your data changes.",
     imageUrl: "https://picsum.photos/seed/react-intro/600/350",
-    likes: [2, 3, 4, 5], // Array of User IDs who liked this post (Mongoose: [{ type: ObjectId, ref: 'User' }])
+    likes: [2, 3, 4, 5],
     likesCount: 4,
-    savedBy: [2], // Array of User IDs who saved this post
+    savedBy: [2],
     isSaved: false,
     createdAt: "2026-08-20T10:00:00.000Z",
     updatedAt: "2026-08-20T10:00:00.000Z",
   },
   {
     id: 2,
-    userId: 2, // References User.id
+    userId: 2,
     title: "Understanding useState Hook",
     body: "The useState hook is one of the most important hooks in React. It lets you add state to functional components. When you call useState, it returns an array with two elements: the current state value and a function to update it.",
     imageUrl: "https://picsum.photos/seed/usestate-hook/600/350",
-    likes: [1, 3, 4], // Current user (id: 1) has liked this post
+    likes: [1, 3, 4],
     likesCount: 3,
-    savedBy: [1, 3], // Current user (id: 1) has saved this post
+    savedBy: [1, 3],
     isSaved: true,
     createdAt: "2026-08-21T09:30:00.000Z",
     updatedAt: "2026-08-21T09:30:00.000Z",
   },
   {
     id: 3,
-    userId: 3, // References User.id
+    userId: 3,
     title: "Props and Component Communication",
     body: "Props are the way components talk to each other in React. A parent component can pass data down to its children through props. Props are read-only, meaning a child component should never modify the props it receives.",
     imageUrl: "https://picsum.photos/seed/props-react/600/350",
-    likes: [1, 2], // Current user (id: 1) has liked this post
+    likes: [1, 2],
     likesCount: 2,
     savedBy: [2],
     isSaved: false,
@@ -120,7 +126,7 @@ let posts = [
   },
   {
     id: 4,
-    userId: 4, // References User.id
+    userId: 4,
     title: "React Router for Navigation",
     body: "React Router lets you handle navigation in a single page application. Instead of loading a new HTML page from the server, React Router swaps components in and out based on the URL. This makes your app feel fast and responsive.",
     imageUrl: "https://picsum.photos/seed/react-router/600/350",
@@ -133,20 +139,20 @@ let posts = [
   },
   {
     id: 5,
-    userId: 5, // References User.id
+    userId: 5,
     title: "useEffect and Side Effects",
     body: "The useEffect hook lets you perform side effects in your components. Side effects include things like fetching data, setting up event listeners, or manually changing the DOM. useEffect runs after every render by default.",
     imageUrl: "https://picsum.photos/seed/useeffect-hook/600/350",
-    likes: [1, 2, 4, 6], // Current user (id: 1) has liked this post
+    likes: [1, 2, 4, 6],
     likesCount: 4,
-    savedBy: [1], // Current user (id: 1) has saved this post
+    savedBy: [1],
     isSaved: true,
     createdAt: "2026-08-24T16:20:00.000Z",
     updatedAt: "2026-08-24T16:20:00.000Z",
   },
   {
     id: 6,
-    userId: 6, // References User.id
+    userId: 6,
     title: "Building Forms in React",
     body: "Forms in React work differently than regular HTML forms. In React, we use controlled components where form data is handled by the React state. Each input element has a value that is controlled by useState, and an onChange handler that updates the state.",
     imageUrl: "https://picsum.photos/seed/react-forms/600/350",
@@ -163,8 +169,8 @@ let posts = [
 let comments = [
   {
     id: 101,
-    postId: 1, // References Post.id
-    userId: 2, // References User.id
+    postId: 1,
+    userId: 2,
     name: "May Thin",
     email: "maythin@example.com",
     body: "This is a great introduction to React! Very helpful for beginners.",
@@ -192,8 +198,8 @@ let comments = [
     id: 202,
     postId: 2,
     userId: 1,
-    name: "Aung Ko",
-    email: "aungko@example.com",
+    name: "Thura",
+    email: "thura@example.com",
     body: "Can you also explain useReducer? I heard it is similar to useState.",
     createdAt: "2026-08-21T11:15:00.000Z",
   },
@@ -228,8 +234,8 @@ let comments = [
     id: 402,
     postId: 4,
     userId: 1,
-    name: "Aung Ko",
-    email: "aungko@example.com",
+    name: "Thura",
+    email: "thura@example.com",
     body: "I was confused about client-side routing before this. Now it makes sense!",
     createdAt: "2026-08-23T13:20:00.000Z",
   },
@@ -263,7 +269,7 @@ let comments = [
 ];
 
 // Network latency simulation (milliseconds)
-const FAKE_DELAY = 500;
+const FAKE_DELAY = 400;
 
 /**
  * Simulates network latency with a Promise
@@ -277,11 +283,20 @@ function delay(ms) {
 }
 
 /**
+ * Sanitizes a user object (strips sensitive password field)
+ * @param {Object} user - User document
+ * @returns {Object} Safe public user profile
+ */
+function sanitizeUser(user) {
+  if (!user) return null;
+  const { password, ...safeUser } = user;
+  return { ...safeUser };
+}
+
+/**
  * Helper to populate user/author details and compute user-specific flags (isLiked, isSaved)
- * Mirrors Mongoose .populate('author') or .populate('userId')
- *
  * @param {Object} post - Raw post document
- * @param {number} currentUserId - The current user's ID
+ * @param {number} currentUserId - Active User ID
  * @returns {Object} Formatted post with populated author and isLiked/isSaved flags
  */
 function formatPost(post, currentUserId = CURRENT_USER_ID) {
@@ -289,9 +304,12 @@ function formatPost(post, currentUserId = CURRENT_USER_ID) {
   const likesList = Array.isArray(post.likes) ? post.likes : [];
   const savedList = Array.isArray(post.savedBy) ? post.savedBy : [];
 
-  const isLiked = likesList.includes(Number(currentUserId));
-  const isSaved =
-    savedList.includes(Number(currentUserId)) || Boolean(post.isSaved);
+  const isLiked = currentUserId
+    ? likesList.includes(Number(currentUserId))
+    : false;
+  const isSaved = currentUserId
+    ? savedList.includes(Number(currentUserId)) || Boolean(post.isSaved)
+    : false;
 
   return {
     ...post,
@@ -313,7 +331,103 @@ function formatPost(post, currentUserId = CURRENT_USER_ID) {
 }
 
 // ==========================================
-// 2. Posts & Likes API Endpoints
+// 2. Authentication API Endpoints
+// ==========================================
+
+/**
+ * Log in with email and password
+ * @param {string} email - User email
+ * @param {string} password - User password
+ * @returns {Promise<Object>} Safe user object on success
+ */
+export async function login(email, password) {
+  await delay(FAKE_DELAY);
+
+  const normalizedEmail = (email || "").trim().toLowerCase();
+  const user = users.find(
+    (u) => u.email.toLowerCase() === normalizedEmail && u.password === password,
+  );
+
+  if (!user) {
+    throw new Error("Invalid email or password");
+  }
+
+  CURRENT_USER_ID = user.id;
+  return sanitizeUser(user);
+}
+
+/**
+ * Register / Sign up a new user account
+ * @param {Object} userData - { name, email, password, username, bio, avatarUrl }
+ * @returns {Promise<Object>} Safe newly registered user object
+ */
+export async function register(userData) {
+  await delay(FAKE_DELAY);
+
+  const normalizedEmail = (userData.email || "").trim().toLowerCase();
+  const rawUsername =
+    (userData.username || userData.name || "user")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "") || `user_${Date.now()}`;
+
+  // Check unique constraints (email & username)
+  const existingEmail = users.some(
+    (u) => u.email.toLowerCase() === normalizedEmail,
+  );
+  if (existingEmail) {
+    throw new Error("An account with this email already exists");
+  }
+
+  const existingUsername = users.some(
+    (u) => u.username.toLowerCase() === rawUsername,
+  );
+  const username = existingUsername
+    ? `${rawUsername}_${Math.floor(Math.random() * 1000)}`
+    : rawUsername;
+
+  const now = new Date().toISOString();
+  const newUser = {
+    id: Date.now(),
+    name: (userData.name || "").trim() || "New User",
+    username: username,
+    email: normalizedEmail,
+    password: userData.password || "password123",
+    avatarUrl: userData.avatarUrl || `https://i.pravatar.cc/150?u=${username}`,
+    bio: userData.bio || "Hello, I am using Social App!",
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  users.push(newUser);
+  CURRENT_USER_ID = newUser.id;
+
+  return sanitizeUser(newUser);
+}
+
+/**
+ * Get current authenticated user profile
+ * @returns {Promise<Object|null>} Safe active user object
+ */
+export async function getCurrentUser() {
+  await delay(200);
+  if (!CURRENT_USER_ID) return null;
+  const user = users.find((u) => u.id === Number(CURRENT_USER_ID));
+  return user ? sanitizeUser(user) : null;
+}
+
+/**
+ * Log out active user
+ * @returns {Promise<{ success: boolean }>}
+ */
+export async function logout() {
+  await delay(200);
+  CURRENT_USER_ID = null;
+  return { success: true };
+}
+
+// ==========================================
+// 3. Posts & Likes API Endpoints
 // ==========================================
 
 /**
@@ -354,7 +468,7 @@ export async function getPostsByUserId(
 }
 
 /**
- * Create a new post linked to a user (author) (simulated database insert)
+ * Create a new post linked to an author user
  * @param {Object} postData - { title, body, imageUrl, userId, isSaved }
  * @param {number|string} [authorUserId=CURRENT_USER_ID] - Author User ID
  * @returns {Promise<Object>} Created and populated post object
@@ -364,7 +478,7 @@ export async function createPost(postData, authorUserId = CURRENT_USER_ID) {
 
   const now = new Date().toISOString();
   const linkedUserId = Number(
-    postData.userId || authorUserId || CURRENT_USER_ID,
+    postData.userId || authorUserId || CURRENT_USER_ID || 1,
   );
 
   const newPost = {
@@ -399,7 +513,7 @@ export async function toggleLikePost(postId, userId = CURRENT_USER_ID) {
   const postIndex = posts.findIndex((p) => p.id === Number(postId));
   if (postIndex === -1) return null;
 
-  const targetUserId = Number(userId);
+  const targetUserId = Number(userId || CURRENT_USER_ID);
   const post = posts[postIndex];
 
   if (!Array.isArray(post.likes)) {
@@ -408,10 +522,8 @@ export async function toggleLikePost(postId, userId = CURRENT_USER_ID) {
 
   const likeIdx = post.likes.indexOf(targetUserId);
   if (likeIdx > -1) {
-    // User already liked -> unlike ($pull)
     post.likes.splice(likeIdx, 1);
   } else {
-    // User hasn't liked -> like ($addToSet)
     post.likes.push(targetUserId);
   }
 
@@ -437,7 +549,7 @@ export async function updatePostLikes(
   const postIndex = posts.findIndex((p) => p.id === Number(postId));
   if (postIndex === -1) return null;
 
-  const targetUserId = Number(userId);
+  const targetUserId = Number(userId || CURRENT_USER_ID);
   const post = posts[postIndex];
 
   if (!Array.isArray(post.likes)) {
@@ -459,26 +571,6 @@ export async function updatePostLikes(
 }
 
 /**
- * Increment like on a post for a user
- * @param {number|string} postId - Post ID
- * @param {number|string} [userId=CURRENT_USER_ID] - User ID
- * @returns {Promise<Object|null>} Updated post object
- */
-export async function likePost(postId, userId = CURRENT_USER_ID) {
-  return updatePostLikes(postId, 1, userId);
-}
-
-/**
- * Decrement like on a post for a user
- * @param {number|string} postId - Post ID
- * @param {number|string} [userId=CURRENT_USER_ID] - User ID
- * @returns {Promise<Object|null>} Updated post object
- */
-export async function unlikePost(postId, userId = CURRENT_USER_ID) {
-  return updatePostLikes(postId, -1, userId);
-}
-
-/**
  * Toggle or set the isSaved status for a user on a post
  * @param {number|string} postId - Post ID
  * @param {number|string} [userId=CURRENT_USER_ID] - User ID
@@ -494,7 +586,7 @@ export async function toggleSavePost(
   const postIndex = posts.findIndex((p) => p.id === Number(postId));
   if (postIndex === -1) return null;
 
-  const targetUserId = Number(userId);
+  const targetUserId = Number(userId || CURRENT_USER_ID);
   const post = posts[postIndex];
 
   if (!Array.isArray(post.savedBy)) {
@@ -519,7 +611,7 @@ export async function toggleSavePost(
 }
 
 // ==========================================
-// 3. Comments API Endpoints
+// 4. Comments API Endpoints
 // ==========================================
 
 /**
@@ -548,7 +640,7 @@ export async function createComment(
   await delay(FAKE_DELAY);
 
   const linkedUserId = Number(
-    commentData.userId || authorUserId || CURRENT_USER_ID,
+    commentData.userId || authorUserId || CURRENT_USER_ID || 1,
   );
   const user = users.find((u) => u.id === linkedUserId);
 
@@ -567,60 +659,43 @@ export async function createComment(
 }
 
 // ==========================================
-// 4. Users CRUD API Endpoints
+// 5. Users CRUD API Endpoints
 // ==========================================
 
 /**
  * Fetch all users
- * @returns {Promise<Array>} Array of all users
+ * @returns {Promise<Array>} Array of all safe user objects
  */
 export async function getUsers() {
   await delay(FAKE_DELAY);
-  return users.map((user) => ({ ...user }));
+  return users.map((user) => sanitizeUser(user));
 }
 
 /**
  * Fetch a single user by ID
  * @param {number|string} id - User ID
- * @returns {Promise<Object|null>} User object or null if not found
+ * @returns {Promise<Object|null>} Safe user object or null if not found
  */
 export async function getUserById(id) {
   await delay(FAKE_DELAY);
   const user = users.find((u) => u.id === Number(id));
-  return user ? { ...user } : null;
+  return user ? sanitizeUser(user) : null;
 }
 
 /**
- * Create a new user (Create)
- * @param {Object} userData - { name, username, email, avatarUrl, bio }
- * @returns {Promise<Object>} Created user object
+ * Create a new user (CRUD Create)
+ * @param {Object} userData - { name, username, email, password, avatarUrl, bio }
+ * @returns {Promise<Object>} Safe created user object
  */
 export async function createUser(userData) {
-  await delay(FAKE_DELAY);
-
-  const now = new Date().toISOString();
-  const newUser = {
-    id: Date.now(),
-    name: userData.name || "",
-    username: userData.username || `user_${Date.now()}`,
-    email: userData.email || "",
-    avatarUrl:
-      userData.avatarUrl ||
-      `https://i.pravatar.cc/150?u=${userData.username || Date.now()}`,
-    bio: userData.bio || "",
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  users.push(newUser);
-  return { ...newUser };
+  return register(userData);
 }
 
 /**
- * Update an existing user by ID (Update)
+ * Update an existing user by ID (CRUD Update)
  * @param {number|string} id - User ID
  * @param {Object} updateData - User fields to update
- * @returns {Promise<Object|null>} Updated user object or null
+ * @returns {Promise<Object|null>} Safe updated user object or null
  */
 export async function updateUser(id, updateData) {
   await delay(FAKE_DELAY);
@@ -635,11 +710,11 @@ export async function updateUser(id, updateData) {
     updatedAt: new Date().toISOString(),
   };
 
-  return { ...users[userIndex] };
+  return sanitizeUser(users[userIndex]);
 }
 
 /**
- * Delete a user by ID (Delete)
+ * Delete a user by ID (CRUD Delete)
  * @param {number|string} id - User ID
  * @returns {Promise<{ success: boolean, deletedUser: Object | null }>} Deletion result
  */
@@ -652,5 +727,5 @@ export async function deleteUser(id) {
   }
 
   const [deletedUser] = users.splice(userIndex, 1);
-  return { success: true, deletedUser };
+  return { success: true, deletedUser: sanitizeUser(deletedUser) };
 }
