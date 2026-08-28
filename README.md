@@ -1,27 +1,33 @@
 # Social App (React + Vite)
 
-A modern social feed application built with React, React Router, and Tailwind CSS. The app features authentication, user-linked posts, protected routes, interactive likes/bookmarks, and an in-memory simulated database layer designed to mirror MongoDB/Mongoose schemas for straightforward migration to a production backend.
+A modern social feed application built with React, React Router, Tailwind CSS, and a RESTful API service layer utilizing the native browser **Fetch API** to communicate with the backend server (`social-app-api-server`).
 
 ---
 
 ## 📌 Features
 
 - **Authentication & Protected Routes**:
-  - Sign Up (Registration) with name, username, email, password, and bio.
-  - Log In with email/password validation.
+  - Sign Up (Registration) with name, username, email, password, and bio (`POST /api/auth/register`).
+  - Log In with email/password validation (`POST /api/auth/login`).
+  - Active session check (`GET /api/auth/me`).
+  - Session termination / Logout (`POST /api/auth/logout`).
   - **Auth Redirects & Protected Routes (`<ProtectedRoute>`)**: Automatically redirects unauthenticated guests to `/login` when accessing protected pages (e.g. `/create-post`).
   - Active session handling via **React Context API** (`AuthContext`) and custom `useAuth()` hook.
   - Top Navigation profile badge (avatar, user name, and logout button).
 - **Feed & Post Browsing**:
-  - View recent posts with responsive cards, media previews, and author metadata.
-  - Detailed Post view with dynamic route matching (`/post/:id`).
+  - View recent posts fetched from server (`GET /api/posts`).
+  - Detailed Post view with dynamic route matching (`GET /api/posts/:id`).
+  - Create new posts with media image and body (`POST /api/posts`).
 - **Interactive Post Actions**:
-  - `isLiked`: Tracks whether the active user liked a post (backed by user IDs array).
-  - `isSaved`: Tracks personal bookmarks.
+  - `isLiked`: Tracks whether the active user liked a post (`POST /api/posts/:id/like`).
+  - `isSaved`: Tracks personal bookmarks (`POST /api/posts/:id/save`).
   - Real-time like counter updates.
-  - Commenting system per post with user attribution.
-- **Relational Data Modeling**: Posts and comments link directly to `userId` foreign keys and populate author information.
-- **MongoDB / Mongoose Schema Ready**: Production-grade schemas equipped with password hashes, timestamps, and relational ObjectIds.
+  - Commenting system per post with user attribution (`GET /api/posts/:postId/comments`, `POST /api/posts/:postId/comments`).
+- **Users Management (CRUD)**:
+  - Read all users (`GET /api/users`).
+  - Read single user (`GET /api/users/:id`).
+  - Update user profile (`PUT /api/users/:id`).
+  - Delete user (`DELETE /api/users/:id`).
 
 ---
 
@@ -32,39 +38,81 @@ A modern social feed application built with React, React Router, and Tailwind CS
 - **Node.js**: `v18.x` or higher
 - **npm**: `v9.x` or higher
 
-### Installation
+### 1. Environment Configuration
+
+Create a `.env` file in the root directory (or copy from `.env.example`):
 
 ```bash
-# Clone or navigate to the project directory
+cp .env.example .env
+```
+
+Set the backend server URL:
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+### 2. Backend Server Setup & Run
+
+In a separate terminal, navigate to the API server directory and start the Express server:
+
+```bash
+cd "../social-app-api-server"
+npm install
+node server.js
+```
+The backend API server will run at `http://localhost:5000`.
+
+### 3. Frontend Client Setup & Run
+
+In the `social-app` directory:
+
+```bash
 cd social-app
 
 # Install project dependencies
 npm install
-```
 
-### Running in Development
-
-```bash
-# Start Vite development server with HMR
+# Start Vite development server
 npm run dev
 ```
 
-The app will be accessible at `http://localhost:5173`.
-
-### Demo Login Accounts
-
-| Name | Email | Password |
-|---|---|---|
-| **Thura** | `thura@example.com` | `password123` |
-| **May Thin** | `maythin@example.com` | `password123` |
-| **Zaw Min** | `zawmin@example.com` | `password123` |
+The frontend application will be accessible at `http://localhost:5173`.
 
 ---
 
-## 🛡️ Protected Route & Auth Redirect Logic
+## 🌐 API Service Layer (`src/services/api.js`)
+
+All client-side HTTP network requests are organized in [`src/services/api.js`](file:///media/thura/DATA/My%20Folders/Code%20with%20Thura/Courses/Fullstack%20Live%20Class/Projects/Vite%20Project/social-app/src/services/api.js) using the native browser `fetch` API.
+
+### Endpoints Mapping
+
+| Function Name | HTTP Method | Endpoint | Description |
+|---|---|---|---|
+| `login(email, password)` | `POST` | `/api/auth/login` | Authenticates user credentials |
+| `register(userData)` | `POST` | `/api/auth/register` | Registers a new user account |
+| `getCurrentUser()` | `GET` | `/api/auth/me` | Retrieves the active authenticated user profile |
+| `logout()` | `POST` | `/api/auth/logout` | Clears active session |
+| `getPosts(currentUserId)` | `GET` | `/api/posts?userId=:id` | Fetches posts with user-specific `isLiked`/`isSaved` |
+| `getPostById(id, currentUserId)` | `GET` | `/api/posts/:id` | Fetches a single post by ID |
+| `getPostsByUserId(userId)` | `GET` | `/api/posts` | Fetches posts filtered by author ID |
+| `createPost(postData)` | `POST` | `/api/posts` | Creates a new post linked to active user |
+| `toggleLikePost(postId, userId)` | `POST` | `/api/posts/:id/like` | Toggles like on a post |
+| `updatePostLikes(postId, delta)` | `POST` | `/api/posts/:id/like` | Helper to update post like status |
+| `toggleSavePost(postId, userId)` | `POST` | `/api/posts/:id/save` | Toggles bookmark/saved status on a post |
+| `getCommentsByPostId(postId)` | `GET` | `/api/posts/:postId/comments` | Fetches comments for a specific post |
+| `createComment(postId, data)` | `POST` | `/api/posts/:postId/comments` | Submits a new comment on a post |
+| `getUsers()` | `GET` | `/api/users` | Fetches all registered users |
+| `getUserById(id)` | `GET` | `/api/users/:id` | Fetches user details by ID |
+| `createUser(userData)` | `POST` | `/api/auth/register` | Creates a new user |
+| `updateUser(id, updateData)` | `PUT` | `/api/users/:id` | Updates user details by ID |
+| `deleteUser(id)` | `DELETE` | `/api/users/:id` | Deletes a user by ID |
+
+---
+
+## 🛡️ Protected Route & Auth Flow
 
 ### 1. `ProtectedRoute.jsx` (`src/components/ProtectedRoute.jsx`)
-A clean wrapper component for routes requiring authentication:
+Guards restricted routes and redirects unauthenticated guests to `/login`:
 
 ```jsx
 import { Navigate } from "react-router";
@@ -77,7 +125,6 @@ function ProtectedRoute({ children }) {
     return <div className="text-center p-8 text-gray-500">Loading...</div>;
   }
 
-  // If not logged in, redirect to login page
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -88,7 +135,7 @@ function ProtectedRoute({ children }) {
 export default ProtectedRoute;
 ```
 
-### 2. Route Configuration in `App.jsx`
+### 2. Route Definitions in `App.jsx`
 
 ```jsx
 <Routes>
@@ -109,184 +156,15 @@ export default ProtectedRoute;
 
 ---
 
-## 🔐 Authentication Architecture (Context API & Custom Hook)
-
-### `AuthContext.jsx` (`src/context/AuthContext.jsx`)
-Provides global authentication state to all components in the React tree:
-
-```jsx
-import { createContext, useContext, useEffect, useState } from "react";
-import { getCurrentUser, login as apiLogin, register as apiRegister, logout as apiLogout } from "../services/api";
-
-const AuthContext = createContext(null);
-
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadAuth() {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-      setIsLoading(false);
-    }
-    loadAuth();
-  }, []);
-
-  async function login(email, password) {
-    const loggedInUser = await apiLogin(email, password);
-    setUser(loggedInUser);
-    return loggedInUser;
-  }
-
-  async function signup(userData) {
-    const newUser = await apiRegister(userData);
-    setUser(newUser);
-    return newUser;
-  }
-
-  async function logout() {
-    await apiLogout();
-    setUser(null);
-  }
-
-  return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout }}>
-      {!isLoading && children}
-    </AuthContext.Provider>
-  );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
-}
-```
-
----
-
-## 🗄️ Data Architecture & Mongoose Schemas
-
-All simulated database operations are defined in [`src/services/api.js`](file:///media/thura/DATA/My%20Folders/Code%20with%20Thura/Courses/Fullstack%20Live%20Class/Projects/Vite%20Project/social-app/src/services/api.js).
-
----
-
-### 1. Users Model (`models/User.js`)
-
-#### Production Mongoose Schema:
-```javascript
-import mongoose from "mongoose";
-
-const UserSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, "Name is required"],
-      trim: true,
-    },
-    username: {
-      type: String,
-      required: [true, "Username is required"],
-      unique: true,
-      trim: true,
-      lowercase: true,
-    },
-    email: {
-      type: String,
-      required: [true, "Email is required"],
-      unique: true,
-      trim: true,
-      lowercase: true,
-    },
-    password: {
-      type: String,
-      required: [true, "Password is required"],
-      minlength: 6,
-    },
-    avatarUrl: {
-      type: String,
-      default: "",
-    },
-    bio: {
-      type: String,
-      default: "",
-    },
-  },
-  {
-    timestamps: true,
-  }
-);
-
-export default mongoose.models.User || mongoose.model("User", UserSchema);
-```
-
----
-
-### 2. Posts Model (`models/Post.js`)
-
-#### Production Mongoose Schema:
-```javascript
-import mongoose from "mongoose";
-
-const PostSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      index: true,
-    },
-    title: {
-      type: String,
-      required: [true, "Post title is required"],
-      trim: true,
-    },
-    body: {
-      type: String,
-      required: [true, "Post body is required"],
-    },
-    imageUrl: {
-      type: String,
-      default: "",
-    },
-    likes: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-    savedBy: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-  },
-  {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-  }
-);
-
-// Virtual field for likesCount
-PostSchema.virtual("likesCount").get(function () {
-  return this.likes ? this.likes.length : 0;
-});
-
-export default mongoose.models.Post || mongoose.model("Post", PostSchema);
-```
-
----
-
-## 🛠️ Project Structure
+## 🛠️ Project Directory Structure
 
 ```text
 social-app/
 ├── public/
 ├── src/
 │   ├── components/
-│   │   ├── CommentSession.jsx  # Comments list & submission form
-│   │   ├── Navbar.jsx          # Top navigation with auth & profile badge
+│   │   ├── CommentSession.jsx  # Comments list & submission form (Fetch API)
+│   │   ├── Navbar.jsx          # Top navigation with auth status & profile badge
 │   │   ├── PostCard.jsx        # Post card with like/save/comment triggers
 │   │   └── ProtectedRoute.jsx  # Auth redirect wrapper for protected routes
 │   ├── context/
@@ -295,13 +173,14 @@ social-app/
 │   │   ├── CreatePost.jsx      # Protected Post creation form
 │   │   ├── DetailPost.jsx      # Post detail view + comments
 │   │   ├── Home.jsx            # Feed / Recent posts page
-│   │   ├── Login.jsx           # Simple Login page (auto-redirects if logged in)
-│   │   └── Signup.jsx          # Simple Sign Up page (auto-redirects if logged in)
+│   │   ├── Login.jsx           # Login page (redirects if already logged in)
+│   │   └── Signup.jsx          # Sign Up page (redirects if already logged in)
 │   ├── services/
-│   │   └── api.js              # In-memory DB, Auth, and async API layer
-│   ├── App.jsx                 # Main router, ProtectedRoute, & AuthProvider wrapper
-│   ├── main.jsx                # DOM mounting
-│   └── index.css               # Global Tailwind CSS styles
+│   │   └── api.js              # RESTful API client (Fetch API CRUD layer)
+│   ├── App.jsx                 # App router, ProtectedRoute, & AuthProvider wrapper
+│   ├── main.jsx                # React root mount
+│   └── index.css               # Tailwind CSS entrypoint
+├── .env.example                # Environment variable reference
 ├── package.json
 ├── vite.config.js
 └── README.md
