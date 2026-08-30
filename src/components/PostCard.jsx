@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { Link } from "react-router";
 
-function PostCard() {
+function PostCard({ id, title, description, imageUrl, showDetailsLink }) {
   const [likes, setLikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -25,21 +26,15 @@ function PostCard() {
 
   return (
     <div className="bg-white border border-gray-300 rounded-lg p-5 mb-4">
-      <h2 className="text-md font-bold text-gray-900 mb-3">This is title.</h2>
+      <h2 className="text-md font-bold text-gray-900 mb-3">{title}</h2>
       <div>
-        <img
-          src="https://unsplash.com/photos/dbIJoD3aTuc/download?force=true&w=640"
-          alt="Image"
-          className="w-full h-64 object-cover"
-        />
+        <img src={imageUrl} alt="Image" className="w-full h-64 object-cover" />
       </div>
-      <p className="text-sm my-4">
-        Lorem ipsum, dolor sit amet consectetur adipisicing elit. Blanditiis,
-        quisquam?
-      </p>
+      <p className="text-sm my-4">{description}</p>
 
       <div className="flex justify-between items-center py-2">
         <span>{likes} likes</span>
+        {showDetailsLink && <Link to={`/post/${id}`}>View Details</Link>}
       </div>
       <div className="flex justify-between items-center border-t border-gray-100 pt-2 text-sm">
         <button
