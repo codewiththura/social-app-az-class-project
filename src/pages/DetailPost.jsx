@@ -12,7 +12,7 @@ export default function DetailPost() {
       .then((result) => {
         setPost(result);
       });
-  });
+  }, [id]);
 
   if (!post) {
     return <p> No posts to show</p>;
