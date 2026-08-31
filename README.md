@@ -14,6 +14,10 @@ A modern social feed application built with React, React Router, Tailwind CSS, a
   - **Auth Redirects & Protected Routes (`<ProtectedRoute>`)**: Automatically redirects unauthenticated guests to `/login` when accessing protected pages.
   - Active session handling via **React Context API** (`AuthContext`) and custom `useAuth()` hook.
   - Top Navigation profile badge (avatar, user name, and logout button).
+- **Real-Time Post Search Bar (New)**:
+  - Controlled input search bar on Home feed and Saved Posts pages.
+  - Filters posts on the fly using case-insensitive title and content matching.
+  - Displays empty search result indicator when no posts match query terms.
 - **Post Ownership & Management Actions**:
   - Post owners can **Edit** post titles, contents, and image URLs.
   - Post owners can **Delete** posts. Deleting a post removes it from the server database along with its associated comments.
@@ -21,7 +25,7 @@ A modern social feed application built with React, React Router, Tailwind CSS, a
 - **Bookmarks / Saved Posts**:
   - Users can save/bookmark posts.
   - A dedicated **Saved Posts** page (`/saved`) lists all bookmarked posts of the user.
-- **Global Post Management Context (`PostContext` - New)**:
+- **Global Post Management Context (`PostContext`)**:
   - Manages global state for posts (`posts`) and loader flags (`isLoading`).
   - Offers custom hook `usePosts()` providing `posts`, `savedPosts`, `deletePost()`, `toggleLike()`, and `toggleSave()`.
   - Simplifies component updates: toggling like or save reactively updates the UI across pages immediately.
@@ -121,9 +125,9 @@ social-app/
 │   │   ├── CreatePost.jsx      # Protected Post creation form
 │   │   ├── DetailPost.jsx      # Post detail view (consumes PostContext dynamically)
 │   │   ├── EditPost.jsx        # Edit post details form
-│   │   ├── Home.jsx            # Feed / Recent posts page
+│   │   ├── Home.jsx            # Feed / Recent posts page with Search Bar
 │   │   ├── Login.jsx           # Login page
-│   │   ├── SavedPosts.jsx      # Lists user saved posts (computed from context)
+│   │   ├── SavedPosts.jsx      # Lists user saved posts with Search Bar
 │   │   └── Signup.jsx          # Sign Up page
 │   ├── services/
 │   │   └── api.js              # RESTful API client (Fetch API CRUD layer)
