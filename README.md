@@ -14,17 +14,17 @@ A modern social feed application built with React, React Router, Tailwind CSS, a
   - **Auth Redirects & Protected Routes (`<ProtectedRoute>`)**: Automatically redirects unauthenticated guests to `/login` when accessing protected pages.
   - Active session handling via **React Context API** (`AuthContext`) and custom `useAuth()` hook.
   - Top Navigation profile badge (avatar, user name, and logout button).
-- **Feed & Post Browsing**:
-  - View recent posts fetched from server (`GET /api/posts`).
-  - Detailed Post view with dynamic route matching (`GET /api/posts/:id`).
-  - Create new posts with media image and body (`POST /api/posts`).
 - **Post Ownership & Management Actions**:
   - Post owners can **Edit** post titles, contents, and image URLs.
   - Post owners can **Delete** posts. Deleting a post removes it from the server database along with its associated comments.
   - Author actions are verified using the authenticated user's ID against the post author's ID.
-- **Bookmarks / Saved Posts (New)**:
+- **Bookmarks / Saved Posts**:
   - Users can save/bookmark posts.
   - A dedicated **Saved Posts** page (`/saved`) lists all bookmarked posts of the user.
+- **Global Post Management Context (`PostContext` - New)**:
+  - Manages global state for posts (`posts`) and loader flags (`isLoading`).
+  - Offers custom hook `usePosts()` providing `posts`, `savedPosts`, `deletePost()`, `toggleLike()`, and `toggleSave()`.
+  - Simplifies component updates: toggling like or save reactively updates the UI across pages immediately.
 - **Interactive Post Actions**:
   - `isLiked`: Tracks whether the active user liked a post (`POST /api/posts/:id/like`).
   - `isSaved`: Tracks personal bookmarks (`POST /api/posts/:id/save`).
@@ -91,31 +91,15 @@ The frontend application will be accessible at `http://localhost:5173`.
 
 All client-side HTTP network requests are organized in [`src/services/api.js`](file:///media/thura/DATA/My%20Folders/Code with Thura/Courses/Fullstack Live Class/Projects/Vite Project/social-app/src/services/api.js) using the native browser `fetch` API.
 
-### Endpoints Mapping
+---
 
-| Function Name | HTTP Method | Endpoint | Description |
-|---|---|---|---|
-| `login(email, password)` | `POST` | `/api/auth/login` | Authenticates user credentials |
-| `register(userData)` | `POST` | `/api/auth/register` | Registers a new user account |
-| `getCurrentUser()` | `GET` | `/api/auth/me` | Retrieves the active authenticated user profile |
-| `logout()` | `POST` | `/api/auth/logout` | Clears active session |
-| `getPosts(currentUserId)` | `GET` | `/api/posts?userId=:id` | Fetches posts with user-specific `isLiked`/`isSaved` |
-| `getPostById(id, currentUserId)` | `GET` | `/api/posts/:id` | Fetches a single post by ID |
-| `getPostsByUserId(userId)` | `GET` | `/api/posts` | Fetches posts filtered by author ID |
-| `createPost(postData)` | `POST` | `/api/posts` | Creates a new post linked to active user |
-| `updatePost(id, postData)` | `PUT` | `/api/posts/:id` | Updates an existing post (owner only) |
-| `deletePost(id)` | `DELETE` | `/api/posts/:id` | Deletes a post and its comments (owner only) |
-| `getSavedPosts()` | `GET` | `/api/posts` | Fetches logged-in user's saved/bookmarked posts |
-| `toggleLikePost(postId, userId)` | `POST` | `/api/posts/:id/like` | Toggles like on a post |
-| `updatePostLikes(postId, delta)` | `POST` | `/api/posts/:id/like` | Helper to update post like status |
-| `toggleSavePost(postId, userId)` | `POST` | `/api/posts/:id/save` | Toggles bookmark/saved status on a post |
-| `getCommentsByPostId(postId)` | `GET` | `/api/posts/:postId/comments` | Fetches comments for a specific post |
-| `createComment(postId, data)` | `POST` | `/api/posts/:postId/comments` | Submits a new comment on a post |
-| `getUsers()` | `GET` | `/api/users` | Fetches all registered users |
-| `getUserById(id)` | `GET` | `/api/users/:id` | Fetches user details by ID |
-| `createUser(userData)` | `POST` | `/api/auth/register` | Creates a new user |
-| `updateUser(id, updateData)` | `PUT` | `/api/users/:id` | Updates user details by ID |
-| `deleteUser(id)` | `DELETE` | `/api/users/:id` | Deletes a user by ID |
+## 🛡️ Global React Context States
+
+### 1. `AuthContext.jsx`
+Manages user sessions, registration, login, and logout. Custom hook: `useAuth()`.
+
+### 2. `PostContext.jsx`
+Manages posts loading, likes, saves, and deletions. Custom hook: `usePosts()`.
 
 ---
 
@@ -128,21 +112,22 @@ social-app/
 │   ├── components/
 │   │   ├── CommentSession.jsx  # Comments list & submission form
 │   │   ├── Navbar.jsx          # Top navigation with home & saved post links
-│   │   ├── PostCard.jsx        # Post card with Edit/Delete actions
+│   │   ├── PostCard.jsx        # Stateless Post card UI connected to PostContext
 │   │   └── ProtectedRoute.jsx  # Auth redirect wrapper for protected routes
 │   ├── context/
-│   │   └── AuthContext.jsx     # Authentication Context & useAuth custom hook
+│   │   ├── AuthContext.jsx     # User authentication Context & hook
+│   │   └── PostContext.jsx     # Global posts Context (like, save, delete, savedPosts)
 │   ├── pages/
 │   │   ├── CreatePost.jsx      # Protected Post creation form
-│   │   ├── DetailPost.jsx      # Post detail view + comments
-│   │   ├── EditPost.jsx        # Edit post title, body, and image
+│   │   ├── DetailPost.jsx      # Post detail view (consumes PostContext dynamically)
+│   │   ├── EditPost.jsx        # Edit post details form
 │   │   ├── Home.jsx            # Feed / Recent posts page
 │   │   ├── Login.jsx           # Login page
-│   │   ├── SavedPosts.jsx      # Lists user saved posts
+│   │   ├── SavedPosts.jsx      # Lists user saved posts (computed from context)
 │   │   └── Signup.jsx          # Sign Up page
 │   ├── services/
 │   │   └── api.js              # RESTful API client (Fetch API CRUD layer)
-│   ├── App.jsx                 # App router, ProtectedRoute, & AuthProvider wrapper
+│   ├── App.jsx                 # App router, ProtectedRoute, AuthProvider, & PostProvider
 │   ├── main.jsx                # React root mount
 │   └── index.css               # Tailwind CSS entrypoint
 ├── .env.example                # Environment variable reference

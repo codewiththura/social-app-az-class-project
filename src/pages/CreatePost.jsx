@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { createPost } from "../services/api";
 import { useNavigate } from "react-router";
+import { usePosts } from "../context/PostContext"; // PostContext Hook ကို ခေါ်ယူခြင်း
 
 const CreatePost = () => {
+  const { loadPosts } = usePosts(); // global refresh function ယူခြင်း
   const [post, setPost] = useState({
     title: "",
     body: "",
@@ -19,6 +21,7 @@ const CreatePost = () => {
         body: post.body,
         imageUrl: post.imageUrl,
       });
+      await loadPosts(); // list အသစ်ကို context ထဲတွင် ပြန်ဆွဲရန်
       navigate("/");
     } catch (error) {
       console.error("Failed to create post:", error);

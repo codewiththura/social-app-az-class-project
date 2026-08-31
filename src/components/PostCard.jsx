@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { updatePostLikes, toggleSavePost, deletePost } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { usePosts } from "../context/PostContext"; // PostContext Hook ကို ခေါ်ယူခြင်း
 
 function PostCard({
   id,
@@ -14,43 +13,13 @@ function PostCard({
   initialIsLiked = false,
   initialIsSaved = false,
   showDetailsLink = true,
-  onRefresh, // Post delete လုပ်ပြီးနောက် data ပြန်ခေါ်ရန် callback function
 }) {
-  const [likes, setLikes] = useState(likesCount);
-  const [isLiked, setIsLiked] = useState(initialIsLiked);
-  const [isSaved, setIsSaved] = useState(initialIsSaved);
-  const { user } = useAuth(); // Login ဝင်ထားသော user ကို context မှ ရယူခြင်း
+  const { user } = useAuth(); // Login user context မှ ယူခြင်း
+  const { deletePost, toggleLike, toggleSave } = usePosts(); // global actions များကို context မှ ယူခြင်း
   const navigate = useNavigate();
 
   // Login ဝင်ထားသော user နှင့် Post ရေးသူ တူညီမှု ရှိမရှိ စစ်ဆေးခြင်း
   const isOwner = user && Number(userId) === Number(user.id);
-
-  // reload လုပ်ရင် state refresh ဖြစ်ဖို့
-  useEffect(() => {
-    setLikes(likesCount);
-    setIsLiked(initialIsLiked);
-    setIsSaved(initialIsSaved);
-  }, [likesCount, initialIsLiked, initialIsSaved]);
-
-  async function handleLike() {
-    if (isLiked) {
-      setLikes((prev) => Math.max(0, prev - 1));
-      setIsLiked(false);
-      await updatePostLikes(id, -1);
-    } else {
-      setLikes((prev) => prev + 1);
-      setIsLiked(true);
-      await updatePostLikes(id, 1);
-    }
-  }
-
-  async function handleSave() {
-    setIsSaved((prev) => !prev);
-    await toggleSavePost(id);
-    if (onRefresh) {
-      onRefresh(); // saved posts list တွင် unsave လုပ်ပါက feed ကို refresh ဖြစ်စေရန်
-    }
-  }
 
   // Post ကို delete လုပ်သည့် function
   async function handleDelete() {
@@ -60,10 +29,9 @@ function PostCard({
     if (confirmDelete) {
       try {
         await deletePost(id);
-        if (onRefresh) {
-          onRefresh(); // list ကို refresh လုပ်ရန်
-        } else {
-          navigate("/"); // details page မှ ဖြစ်ပါက home သို့ ပြန်သွားရန်
+        // တကယ်လို့ Detail page မှ ဖျက်လိုက်ပါက Home သို့ အလိုအလျောက် ပြန်ပို့ပေးရန်
+        if (!showDetailsLink) {
+          navigate("/");
         }
       } catch (error) {
         console.error("Failed to delete post:", error);
@@ -107,7 +75,7 @@ function PostCard({
       <p className="text-sm my-4 text-gray-700">{description}</p>
 
       <div className="flex justify-between items-center py-2">
-        <span className="text-sm font-medium text-gray-600">{likes} likes</span>
+        <span className="text-sm font-medium text-gray-600">{likesCount} likes</span>
         {showDetailsLink && id && (
           <Link
             to={`/post/${id}`}
@@ -119,12 +87,12 @@ function PostCard({
       </div>
       <div className="flex justify-between items-center border-t border-gray-100 pt-2 text-sm">
         <button
-          onClick={handleLike}
+          onClick={() => toggleLike(id)}
           className={`flex-1 py-1.5 font-medium text-center rounded hover:bg-gray-50 transition-colors ${
-            isLiked ? "text-blue-600 font-semibold" : "text-gray-600"
+            initialIsLiked ? "text-blue-600 font-semibold" : "text-gray-600"
           } hover:cursor-pointer`}
         >
-          {isLiked ? "Liked" : "Like"}
+          {initialIsLiked ? "Liked" : "Like"}
         </button>
         <button
           onClick={() => navigate(`/post/${id}`)}
@@ -133,12 +101,12 @@ function PostCard({
           Comment
         </button>
         <button
-          onClick={handleSave}
+          onClick={() => toggleSave(id)}
           className={`flex-1 py-1.5 font-medium text-center rounded hover:bg-gray-50 transition-colors ${
-            isSaved ? "text-blue-600 font-semibold" : "text-gray-600"
+            initialIsSaved ? "text-blue-600 font-semibold" : "text-gray-600"
           } hover:cursor-pointer`}
         >
-          {isSaved ? "Saved" : "Save"}
+          {initialIsSaved ? "Saved" : "Save"}
         </button>
       </div>
     </div>

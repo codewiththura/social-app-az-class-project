@@ -1,27 +1,9 @@
-import { useEffect, useState } from "react";
 import PostCard from "../components/PostCard";
-import { getSavedPosts } from "../services/api";
+import { usePosts } from "../context/PostContext"; // PostContext Hook ကို ခေါ်ယူသုံးစွဲခြင်း
 
 function SavedPosts() {
-  const [posts, setPosts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Saved post များကို API မှ ခေါ်ယူဖော်ပြခြင်း
-  async function loadSavedPosts() {
-    try {
-      setIsLoading(true);
-      const data = await getSavedPosts();
-      setPosts(data);
-    } catch (error) {
-      console.error("Failed to load saved posts:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadSavedPosts();
-  }, []);
+  // Context ထဲရှိ savedPosts (computed) နှင့် isLoading state ကို တိုက်ရိုက် ရယူသုံးစွဲခြင်း
+  const { savedPosts, isLoading } = usePosts();
 
   if (isLoading) {
     return (
@@ -37,12 +19,12 @@ function SavedPosts() {
         Saved Posts (သိမ်းဆည်းထားသော ပို့စ်များ)
       </h1>
       
-      {posts.length === 0 ? (
+      {savedPosts.length === 0 ? (
         <div className="text-center p-8 border border-dashed border-gray-300 rounded-lg text-gray-500">
           No saved posts found. (သိမ်းဆည်းထားသော ပို့စ်များ မရှိသေးပါ)
         </div>
       ) : (
-        posts.map((post) => (
+        savedPosts.map((post) => (
           <PostCard
             key={post.id}
             id={post.id}
@@ -54,7 +36,6 @@ function SavedPosts() {
             likesCount={post.likesCount}
             initialIsLiked={post.isLiked}
             initialIsSaved={post.isSaved}
-            onRefresh={loadSavedPosts} // post update ဖြစ်ပါက page ကို refresh ပြုလုပ်ရန်
           />
         ))
       )}

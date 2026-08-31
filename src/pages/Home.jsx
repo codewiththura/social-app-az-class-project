@@ -1,26 +1,9 @@
-import { useEffect, useState } from "react";
 import PostCard from "../components/PostCard";
-import { getPosts } from "../services/api";
+import { usePosts } from "../context/PostContext"; // PostContext Hook ကို ခေါ်ယူအသုံးပြုခြင်း
 
 function Home() {
-  const [posts, setPosts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  async function loadPosts() {
-    try {
-      setIsLoading(true);
-      const data = await getPosts();
-      setPosts(data);
-    } catch (error) {
-      console.error("Failed to load posts:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadPosts();
-  }, []);
+  // Context ထဲရှိ global posts list နှင့် isLoading state ကို ရယူသုံးစွဲခြင်း
+  const { posts, isLoading } = usePosts();
 
   if (isLoading) {
     return (
@@ -47,7 +30,6 @@ function Home() {
           likesCount={post.likesCount}
           initialIsLiked={post.isLiked}
           initialIsSaved={post.isSaved}
-          onRefresh={loadPosts} // delete လုပ်ပြီးလျှင် list refresh ရန်
         />
       ))}
     </div>

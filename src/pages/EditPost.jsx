@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { getPostById, updatePost } from "../services/api";
+import { usePosts } from "../context/PostContext"; // PostContext Hook ကို ခေါ်ယူခြင်း
 
 const EditPost = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { loadPosts } = usePosts(); // global refresh function ယူခြင်း
 
   const [post, setPost] = useState({
     title: "",
@@ -38,6 +40,7 @@ const EditPost = () => {
     e.preventDefault();
     try {
       await updatePost(id, post);
+      await loadPosts(); // list အသစ်ကို context ထဲတွင် ပြန်ဆွဲရန်
       navigate(`/post/${id}`); // details စာမျက်နှာသို့ ပြန်သွားရန်
     } catch (error) {
       console.error("Failed to update post:", error);
