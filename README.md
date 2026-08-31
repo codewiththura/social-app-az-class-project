@@ -11,13 +11,20 @@ A modern social feed application built with React, React Router, Tailwind CSS, a
   - Log In with email/password validation (`POST /api/auth/login`).
   - Active session check (`GET /api/auth/me`).
   - Session termination / Logout (`POST /api/auth/logout`).
-  - **Auth Redirects & Protected Routes (`<ProtectedRoute>`)**: Automatically redirects unauthenticated guests to `/login` when accessing protected pages (e.g. `/create-post`).
+  - **Auth Redirects & Protected Routes (`<ProtectedRoute>`)**: Automatically redirects unauthenticated guests to `/login` when accessing protected pages.
   - Active session handling via **React Context API** (`AuthContext`) and custom `useAuth()` hook.
   - Top Navigation profile badge (avatar, user name, and logout button).
 - **Feed & Post Browsing**:
   - View recent posts fetched from server (`GET /api/posts`).
   - Detailed Post view with dynamic route matching (`GET /api/posts/:id`).
   - Create new posts with media image and body (`POST /api/posts`).
+- **Post Ownership & Management Actions**:
+  - Post owners can **Edit** post titles, contents, and image URLs.
+  - Post owners can **Delete** posts. Deleting a post removes it from the server database along with its associated comments.
+  - Author actions are verified using the authenticated user's ID against the post author's ID.
+- **Bookmarks / Saved Posts (New)**:
+  - Users can save/bookmark posts.
+  - A dedicated **Saved Posts** page (`/saved`) lists all bookmarked posts of the user.
 - **Interactive Post Actions**:
   - `isLiked`: Tracks whether the active user liked a post (`POST /api/posts/:id/like`).
   - `isSaved`: Tracks personal bookmarks (`POST /api/posts/:id/save`).
@@ -82,7 +89,7 @@ The frontend application will be accessible at `http://localhost:5173`.
 
 ## 🌐 API Service Layer (`src/services/api.js`)
 
-All client-side HTTP network requests are organized in [`src/services/api.js`](file:///media/thura/DATA/My%20Folders/Code%20with%20Thura/Courses/Fullstack%20Live%20Class/Projects/Vite%20Project/social-app/src/services/api.js) using the native browser `fetch` API.
+All client-side HTTP network requests are organized in [`src/services/api.js`](file:///media/thura/DATA/My%20Folders/Code with Thura/Courses/Fullstack Live Class/Projects/Vite Project/social-app/src/services/api.js) using the native browser `fetch` API.
 
 ### Endpoints Mapping
 
@@ -96,6 +103,9 @@ All client-side HTTP network requests are organized in [`src/services/api.js`](f
 | `getPostById(id, currentUserId)` | `GET` | `/api/posts/:id` | Fetches a single post by ID |
 | `getPostsByUserId(userId)` | `GET` | `/api/posts` | Fetches posts filtered by author ID |
 | `createPost(postData)` | `POST` | `/api/posts` | Creates a new post linked to active user |
+| `updatePost(id, postData)` | `PUT` | `/api/posts/:id` | Updates an existing post (owner only) |
+| `deletePost(id)` | `DELETE` | `/api/posts/:id` | Deletes a post and its comments (owner only) |
+| `getSavedPosts()` | `GET` | `/api/posts` | Fetches logged-in user's saved/bookmarked posts |
 | `toggleLikePost(postId, userId)` | `POST` | `/api/posts/:id/like` | Toggles like on a post |
 | `updatePostLikes(postId, delta)` | `POST` | `/api/posts/:id/like` | Helper to update post like status |
 | `toggleSavePost(postId, userId)` | `POST` | `/api/posts/:id/save` | Toggles bookmark/saved status on a post |
@@ -109,53 +119,6 @@ All client-side HTTP network requests are organized in [`src/services/api.js`](f
 
 ---
 
-## 🛡️ Protected Route & Auth Flow
-
-### 1. `ProtectedRoute.jsx` (`src/components/ProtectedRoute.jsx`)
-Guards restricted routes and redirects unauthenticated guests to `/login`:
-
-```jsx
-import { Navigate } from "react-router";
-import { useAuth } from "../context/AuthContext";
-
-function ProtectedRoute({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return <div className="text-center p-8 text-gray-500">Loading...</div>;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
-}
-
-export default ProtectedRoute;
-```
-
-### 2. Route Definitions in `App.jsx`
-
-```jsx
-<Routes>
-  <Route path="/" element={<Home />} />
-  <Route
-    path="/create-post"
-    element={
-      <ProtectedRoute>
-        <CreatePost />
-      </ProtectedRoute>
-    }
-  />
-  <Route path="/post/:id" element={<DetailPost />} />
-  <Route path="/login" element={<Login />} />
-  <Route path="/signup" element={<Signup />} />
-</Routes>
-```
-
----
-
 ## 🛠️ Project Directory Structure
 
 ```text
@@ -163,18 +126,20 @@ social-app/
 ├── public/
 ├── src/
 │   ├── components/
-│   │   ├── CommentSession.jsx  # Comments list & submission form (Fetch API)
-│   │   ├── Navbar.jsx          # Top navigation with auth status & profile badge
-│   │   ├── PostCard.jsx        # Post card with like/save/comment triggers
+│   │   ├── CommentSession.jsx  # Comments list & submission form
+│   │   ├── Navbar.jsx          # Top navigation with home & saved post links
+│   │   ├── PostCard.jsx        # Post card with Edit/Delete actions
 │   │   └── ProtectedRoute.jsx  # Auth redirect wrapper for protected routes
 │   ├── context/
 │   │   └── AuthContext.jsx     # Authentication Context & useAuth custom hook
 │   ├── pages/
 │   │   ├── CreatePost.jsx      # Protected Post creation form
 │   │   ├── DetailPost.jsx      # Post detail view + comments
+│   │   ├── EditPost.jsx        # Edit post title, body, and image
 │   │   ├── Home.jsx            # Feed / Recent posts page
-│   │   ├── Login.jsx           # Login page (redirects if already logged in)
-│   │   └── Signup.jsx          # Sign Up page (redirects if already logged in)
+│   │   ├── Login.jsx           # Login page
+│   │   ├── SavedPosts.jsx      # Lists user saved posts
+│   │   └── Signup.jsx          # Sign Up page
 │   ├── services/
 │   │   └── api.js              # RESTful API client (Fetch API CRUD layer)
 │   ├── App.jsx                 # App router, ProtectedRoute, & AuthProvider wrapper

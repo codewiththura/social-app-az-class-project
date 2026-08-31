@@ -95,7 +95,7 @@ export async function logout() {
 /**
  * Fetch all posts with populated authors and user-specific like/saved state
  */
-export async function getPosts(currentUserId = CURRENT_USER_ID) {
+export async function getPosts(currentUserId) {
   const query = currentUserId ? `?userId=${currentUserId}` : "";
   const response = await fetch(`${API_BASE_URL}/posts${query}`);
   return await response.json();
@@ -138,6 +138,40 @@ export async function createPost(postData, authorUserId = CURRENT_USER_ID) {
     }),
   });
   return await response.json();
+}
+
+/**
+ * Update an existing post by ID
+ */
+export async function updatePost(postId, postData) {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: postData.title,
+      body: postData.body,
+      imageUrl: postData.imageUrl,
+    }),
+  });
+  return await response.json();
+}
+
+/**
+ * Delete a post by ID
+ */
+export async function deletePost(postId) {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+    method: "DELETE",
+  });
+  return await response.json();
+}
+
+/**
+ * Fetch all saved posts of the logged-in user
+ */
+export async function getSavedPosts() {
+  const allPosts = await getPosts();
+  return allPosts.filter((post) => post.isSaved);
 }
 
 /**

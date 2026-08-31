@@ -9,19 +9,19 @@ const DetailPost = () => {
   const [post, setPost] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function getPostData() {
-      try {
-        setIsLoading(true);
-        const data = await getPostById(id);
-        setPost(data);
-      } catch (error) {
-        console.error("Failed to fetch post details:", error);
-      } finally {
-        setIsLoading(false);
-      }
+  async function getPostData() {
+    try {
+      setIsLoading(true);
+      const data = await getPostById(id);
+      setPost(data);
+    } catch (error) {
+      console.error("Failed to fetch post details:", error);
+    } finally {
+      setIsLoading(false);
     }
+  }
 
+  useEffect(() => {
     getPostData();
   }, [id]);
 
@@ -56,12 +56,14 @@ const DetailPost = () => {
       <PostCard
         id={post.id}
         author={post.author.name}
+        userId={post.userId} // owner စစ်ရန် userId ပေးခြင်း
         title={post.title}
         imageUrl={post.imageUrl}
         description={post.body}
         likesCount={post.likesCount}
         initialIsLiked={post.isLiked}
         initialIsSaved={post.isSaved}
+        onRefresh={getPostData} // delete လုပ်ပြီးနောက် state update လုပ်ရန်
         showDetailsLink={false}
       />
 
