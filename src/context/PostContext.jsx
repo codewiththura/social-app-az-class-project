@@ -5,12 +5,14 @@ import {
   toggleLikePost,
   toggleSavePost,
 } from "../services/api";
+import { useAuth } from "./AuthContext";
 
 // ၁။ PostContext တည်ဆောက်ခြင်း
 const PostContext = createContext(null);
 
 // ၂။ Provider Component တည်ဆောက်ခြင်း (Post နဲ့ဆိုင်တဲ့ state/actions အားလုံးကို global handle လုပ်ပေးမည်)
 export function PostProvider({ children }) {
+  const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,7 +32,7 @@ export function PostProvider({ children }) {
   // App စတင်ချိန်တွင် post များကို တစ်ကြိမ်တည်း ခေါ်ယူထားခြင်း
   useEffect(() => {
     loadPosts();
-  }, []);
+  }, [user]); // When a user logs in, AuthContext updates the logged-in user, PostContext need to re-fetches posts for that user.
 
   // Post ဖျက်ရန် function
   async function deletePost(id) {
@@ -51,7 +53,7 @@ export function PostProvider({ children }) {
       if (updatedPost) {
         // ပြောင်းလဲသွားသော post တစ်ခုတည်းကို ရှာပြီး state ထဲတွင် အစားထိုးခြင်း
         setPosts((prevPosts) =>
-          prevPosts.map((post) => (post.id === id ? updatedPost : post))
+          prevPosts.map((post) => (post.id === id ? updatedPost : post)),
         );
       }
     } catch (error) {
@@ -66,7 +68,7 @@ export function PostProvider({ children }) {
       if (updatedPost) {
         // ပြောင်းလဲသွားသော post တစ်ခုတည်းကို ရှာပြီး state ထဲတွင် အစားထိုးခြင်း
         setPosts((prevPosts) =>
-          prevPosts.map((post) => (post.id === id ? updatedPost : post))
+          prevPosts.map((post) => (post.id === id ? updatedPost : post)),
         );
       }
     } catch (error) {
@@ -87,11 +89,7 @@ export function PostProvider({ children }) {
     toggleSave,
   };
 
-  return (
-    <PostContext.Provider value={value}>
-      {children}
-    </PostContext.Provider>
-  );
+  return <PostContext.Provider value={value}>{children}</PostContext.Provider>;
 }
 
 // ၃။ Custom Hook - Component များတွင် usePosts() ဟု ခေါ်ယူသုံးစွဲနိုင်ရန်
