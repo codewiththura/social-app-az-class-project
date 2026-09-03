@@ -6,6 +6,8 @@ A modern social feed application built with React, React Router, Tailwind CSS, a
 
 ## 📌 Features
 
+- **Error Handling & 404 Catch-All Routing (New)**:
+  - **404 Not Found Page (`<NotFound>`)**: Automatically renders a beginner-friendly 404 page for any undefined URL route using React Router catch-all (`path="*"`) matching. Includes clear navigation to return to the Home page.
 - **Authentication & Protected Routes**:
   - Sign Up (Registration) with name, username, email, password, and bio (`POST /api/auth/register`).
   - Log In with email/password validation (`POST /api/auth/login`).
@@ -14,7 +16,7 @@ A modern social feed application built with React, React Router, Tailwind CSS, a
   - **Auth Redirects & Protected Routes (`<ProtectedRoute>`)**: Automatically redirects unauthenticated guests to `/login` when accessing protected pages.
   - Active session handling via **React Context API** (`AuthContext`) and custom `useAuth()` hook.
   - Top Navigation profile badge (avatar, user name, and logout button).
-- **Real-Time Post Search Bar (New)**:
+- **Real-Time Post Search Bar**:
   - Controlled input search bar on Home feed and Saved Posts pages.
   - Filters posts on the fly using case-insensitive title and content matching.
   - Displays empty search result indicator when no posts match query terms.
@@ -42,6 +44,21 @@ A modern social feed application built with React, React Router, Tailwind CSS, a
 
 ---
 
+## 🚦 Application Routes Table
+
+| Path             | Component    | Protected | Description                                             |
+| :--------------- | :----------- | :-------: | :------------------------------------------------------ |
+| `/`              | `Home`       |    Yes    | Main feed displaying recent posts with real-time search |
+| `/create-post`   | `CreatePost` |    Yes    | Form page to create a new post                          |
+| `/edit-post/:id` | `EditPost`   |    Yes    | Form page to update an existing owned post              |
+| `/saved`         | `SavedPosts` |    Yes    | Collection of bookmarked/saved posts                    |
+| `/post/:id`      | `DetailPost` |    No     | Post detail view and comments section                   |
+| `/login`         | `Login`      |    No     | User authentication login form                          |
+| `/signup`        | `Signup`     |    No     | User registration signup form                           |
+| `*`              | `NotFound`   |    No     | Catch-all 404 route for non-existent paths              |
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -58,6 +75,7 @@ cp .env.example .env
 ```
 
 Set the backend server URL:
+
 ```env
 VITE_API_URL=http://localhost:5000/api
 ```
@@ -71,6 +89,7 @@ cd "../social-app-api-server"
 npm install
 node server.js
 ```
+
 The backend API server will run at `http://localhost:5000`.
 
 ### 3. Frontend Client Setup & Run
@@ -97,12 +116,22 @@ All client-side HTTP network requests are organized in [`src/services/api.js`](f
 
 ---
 
-## 🛡️ Global React Context States
+## 🛡️ Global React Context & Error Handling
 
-### 1. `AuthContext.jsx`
+### 1. `ErrorBoundary.jsx`
+
+React Class Component implementing `getDerivedStateFromError` and `componentDidCatch` to prevent application crashes caused by rendering runtime errors.
+
+### 2. `NotFound.jsx` (404 Page)
+
+Renders a user-friendly 404 message when navigating to unrecognized paths (caught by `path="*"` route in `App.jsx`).
+
+### 3. `AuthContext.jsx`
+
 Manages user sessions, registration, login, and logout. Custom hook: `useAuth()`.
 
-### 2. `PostContext.jsx`
+### 4. `PostContext.jsx`
+
 Manages posts loading, likes, saves, and deletions. Custom hook: `usePosts()`.
 
 ---
@@ -115,6 +144,7 @@ social-app/
 ├── src/
 │   ├── components/
 │   │   ├── CommentSession.jsx  # Comments list & submission form
+│   │   ├── ErrorBoundary.jsx   # Global React Error Boundary component (New)
 │   │   ├── Navbar.jsx          # Top navigation with home & saved post links
 │   │   ├── PostCard.jsx        # Stateless Post card UI connected to PostContext
 │   │   └── ProtectedRoute.jsx  # Auth redirect wrapper for protected routes
@@ -127,11 +157,12 @@ social-app/
 │   │   ├── EditPost.jsx        # Edit post details form
 │   │   ├── Home.jsx            # Feed / Recent posts page with Search Bar
 │   │   ├── Login.jsx           # Login page
+│   │   ├── NotFound.jsx        # 404 Not Found Page component (New)
 │   │   ├── SavedPosts.jsx      # Lists user saved posts with Search Bar
 │   │   └── Signup.jsx          # Sign Up page
 │   ├── services/
 │   │   └── api.js              # RESTful API client (Fetch API CRUD layer)
-│   ├── App.jsx                 # App router, ProtectedRoute, AuthProvider, & PostProvider
+│   ├── App.jsx                 # App router, ProtectedRoute, ErrorBoundary, AuthProvider, & PostProvider
 │   ├── main.jsx                # React root mount
 │   └── index.css               # Tailwind CSS entrypoint
 ├── .env.example                # Environment variable reference

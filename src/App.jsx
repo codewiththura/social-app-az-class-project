@@ -6,6 +6,7 @@ import SavedPosts from "./pages/SavedPosts";
 import DetailPost from "./pages/DetailPost";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { AuthProvider } from "./context/AuthContext";
@@ -53,6 +54,9 @@ function App() {
             <Route path="/post/:id" element={<DetailPost />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+
+            {/* 404 Not Found Page Route (Catch-all for unknown paths) */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </PostProvider>
