@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { usePosts } from "../context/PostContext"; // PostContext Hook ကို ခေါ်ယူခြင်း
+import { getImageUrl } from "../services/api";
 
 function PostCard({
   id,
@@ -67,7 +68,7 @@ function PostCard({
       <h2 className="text-md font-bold text-gray-900 mb-3">{title}</h2>
       <div>
         <img
-          src={imageUrl}
+          src={getImageUrl(imageUrl)}
           alt={title || "Post image"}
           className="w-full h-64 object-cover rounded"
         />

@@ -9,6 +9,27 @@ export const API_BASE_URL =
 // Active Session State (လက်ရှိ Login ဝင်ထားသော User ID)
 export let CURRENT_USER_ID = null;
 
+/**
+ * Image URL Helper
+ * Static uploaded images (/uploads/...) များသည် Backend Server တွင် ရှိသောကြောင့်
+ * Full URL (http://localhost:5000/uploads/...) သို့ တွဲစပ်ပေးပါသည်။
+ */
+export function getImageUrl(url) {
+  if (!url) return "";
+  // အကယ်၍ external link (https://... သို့မဟုတ် http://) သို့မဟုတ် blob/data ဖြစ်ပါက မူလအတိုင်းထားမည်
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("blob:") ||
+    url.startsWith("data:")
+  ) {
+    return url;
+  }
+  // Backend Base Origin ကို ယူခြင်း (ဥပမာ- http://localhost:5000/api မှ /api ကို ဖယ်ထုတ်ခြင်း)
+  const serverOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
+  return `${serverOrigin}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
 // ==========================================
 // 1. Authentication API Endpoints
 // ==========================================
@@ -154,6 +175,52 @@ export async function updatePost(postId, postData) {
     }),
   });
   return await response.json();
+}
+
+/**
+ * Upload an image file for a post (Post Image Upload)
+ * @param {number|string} postId - Post ID
+ * @param {File} file - Selected image file from input[type="file"]
+ */
+export async function uploadPostPhoto(postId, file) {
+  // Multipart Form Data အဖြစ် ပြောင်းလဲတည်ဆောက်ခြင်း
+  const formData = new FormData();
+  // Backend multer middleware မှ 'photo', 'image', 'avatar', 'file' အားလုံးလက်ခံပါသည်
+  formData.append("photo", file);
+
+  // မှတ်ချက်: File upload လုပ်ရာတွင် Content-Type header ကို manual မသတ်မှတ်ရပါ။
+  // Browser မှ multipart/form-data boundary ကို အလိုအလျောက် သတ်မှတ်ပေးပါမည်။
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}/photo`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to upload post photo");
+  }
+  return data;
+}
+
+/**
+ * Upload user profile avatar photo
+ * @param {number|string} userId - User ID
+ * @param {File} file - Selected image file
+ */
+export async function uploadUserPhoto(userId, file) {
+  const formData = new FormData();
+  formData.append("photo", file);
+
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/photo`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to upload user photo");
+  }
+  return data;
 }
 
 /**

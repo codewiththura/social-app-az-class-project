@@ -6,7 +6,13 @@ A modern social feed application built with React, React Router, Tailwind CSS, a
 
 ## 📌 Features
 
-- **Error Handling & 404 Catch-All Routing (New)**:
+- **Real Photo Upload & Instant Preview (New)**:
+  - **File Upload Inputs**: Replaced plain `imageUrl` text boxes in both `CreatePost` and `EditPost` with actual file picker inputs (`<input type="file" accept="image/*">`).
+  - **Instant Client-Side Preview**: Utilizes `URL.createObjectURL(file)` to render an instant thumbnail preview before form submission, complete with a single-click remove button.
+  - **2-Step Post Creation Workflow**: Creates the post via `POST /api/posts` to obtain its unique ID, then uploads the selected image file to `POST /api/posts/:id/photo` via `multipart/form-data`.
+  - **Edit Post Image Replacement**: Allows authors to preview existing images and upload a replacement file that automatically overwrites the previous image on the backend.
+  - **URL Resolver (`getImageUrl`) & Vite Dev Proxy**: Automatically resolves relative `/uploads/posts/...` backend paths to the Express server origin, reinforced with a Vite proxy for `/uploads`.
+- **Error Handling & 404 Catch-All Routing**:
   - **404 Not Found Page (`<NotFound>`)**: Automatically renders a beginner-friendly 404 page for any undefined URL route using React Router catch-all (`path="*"`) matching. Includes clear navigation to return to the Home page.
 - **Authentication & Protected Routes**:
   - Sign Up (Registration) with name, username, email, password, and bio (`POST /api/auth/register`).
@@ -113,6 +119,53 @@ The frontend application will be accessible at `http://localhost:5173`.
 ## 🌐 API Service Layer (`src/services/api.js`)
 
 All client-side HTTP network requests are organized in [`src/services/api.js`](file:///media/thura/DATA/My%20Folders/Code with Thura/Courses/Fullstack Live Class/Projects/Vite Project/social-app/src/services/api.js) using the native browser `fetch` API.
+
+---
+
+## 📸 Photo Upload Architecture & Beginner Teaching Guide
+
+This application demonstrates how to handle actual file uploads in a modern React frontend connected to an Express/Multer backend.
+
+### 1. The 2-Step Post Creation with Upload Flow (`CreatePost.jsx`)
+
+Because a post requires a server-assigned `id` to associate its uploaded image (`/uploads/posts/post-<id>.<ext>`), the client performs a clean 2-step async sequence:
+
+```mermaid
+sequenceDiagram
+    participant User as Student / User
+    participant Frontend as React (CreatePost)
+    participant Backend as Express API Server
+
+    User->>Frontend: Select file -> Instant Preview (URL.createObjectURL)
+    User->>Frontend: Click "Publish Post"
+    Frontend->>Backend: 1. POST /api/posts { title, body }
+    Backend-->>Frontend: 201 Created { id: 172545..., ... }
+    alt Image File Selected
+        Frontend->>Backend: 2. POST /api/posts/:id/photo (FormData with 'photo')
+        Backend-->>Frontend: 200 OK { imageUrl: "/uploads/posts/post-...jpg" }
+    end
+    Frontend->>Frontend: 3. loadPosts() context refresh & redirect to "/"
+```
+
+### 2. Post Edit & Overwrite Flow (`EditPost.jsx`)
+
+When editing an existing post:
+1. `EditPost` loads the post by `:id`, displaying the current photo via `getImageUrl(currentImageUrl)`.
+2. The user can select a new photo. When selected, a new preview is shown alongside a *"Keep Current Photo"* cancel button.
+3. Upon submission:
+   - Text fields are updated via `PUT /api/posts/:id`.
+   - If a new photo file was chosen, it is sent to `POST /api/posts/:id/photo`. The backend's deterministic ID-based storage automatically deletes the old file and writes the new file as `post-<id>.<ext>`, preventing server disk bloat.
+
+### 3. Key Concepts for Beginners
+
+| Concept | Explanation |
+| :--- | :--- |
+| **`FormData` Object** | Used to construct `multipart/form-data` payloads required for binary file uploads (`formData.append("photo", file)`). |
+| **Omitting `Content-Type` Header** | **Crucial teaching point:** Never set `"Content-Type": "multipart/form-data"` manually in `fetch`! The browser automatically computes the boundary delimiter (e.g. `boundary=----WebKitFormBoundary...`). Manual setting breaks the request! |
+| **`URL.createObjectURL(file)`** | Creates a temporary DOM string pointing to the file stored in browser memory, enabling instantaneous image previews before uploading. |
+| **`URL.revokeObjectURL(previewUrl)`** | Cleans up the in-memory object URL when the user removes or replaces the image, preventing browser memory leaks. |
+| **`getImageUrl(url)` Resolver** | Safely maps relative backend file paths (`/uploads/posts/post-1.png`) to `http://localhost:5000/uploads/posts/post-1.png`, while leaving full external URLs (`https://images.unsplash.com/...`) untouched. |
+| **Vite Dev Proxy** | Configured in `vite.config.js` (`proxy: { "/uploads": "http://localhost:5000" }`) to ensure static images route to the backend server even without full URLs. |
 
 ---
 
