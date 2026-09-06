@@ -1,6 +1,7 @@
 import { useParams } from "react-router";
 import PostCard from "../components/PostCard";
 import { useEffect, useState } from "react";
+import CommentSession from "../components/CommentSession";
 
 export default function DetailPost() {
   const [post, setPost] = useState(null);
@@ -26,7 +27,11 @@ export default function DetailPost() {
         description={post.body}
         imageUrl={post.imageUrl}
         showDetailsLink={false}
+        likeCounts={post.likesCount}
+        initialIsLiked={post.isLiked}
       />
+
+      <CommentSession postId={id} />
     </div>
   );
 }

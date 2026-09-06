@@ -1,36 +1,23 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [user, setUser] = useState(null);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
-
-  async function login(email, password) {
-    const response = await fetch(
-      `https://api.codewiththura.com/api/auth/login`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      },
-    );
-
-    if (!response.ok) return null;
-    return await response.json();
-  }
+  const { user, login } = useAuth();
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setError("");
     try {
-      const loggedInUser = await login(email, password);
-      setUser(loggedInUser);
+      await login(email, password);
       navigate("/");
     } catch (err) {
       console.error(err);
+      setError(err.message || "Failed to login");
     }
   }
 
@@ -39,6 +26,11 @@ const Login = () => {
       <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
       <p className="text-sm text-gray-500 mb-6">Log in to your account</p>
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 mb-4">
+          {error}
+        </div>
+      )}
       <form className="space-y-4" onSubmit={handleSubmit}>
         <label className="block text-sm font-medium">Email Address</label>
         <input
