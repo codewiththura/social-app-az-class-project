@@ -5,12 +5,14 @@ function Home() {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/posts")
+    fetch("https://api.codewiththura.com/api/posts")
       .then((response) => response.json())
       .then((result) => {
         setPosts(result);
       });
   }, []);
+
+  console.log(posts);
 
   return (
     <div className="max-w-3xl mx-auto p-4 ">
@@ -23,6 +25,8 @@ function Home() {
           description={post.body}
           imageUrl={post.imageUrl}
           showDetailsLink={true}
+          likeCounts={post.likesCount}
+          initialIsLiked={post.isLiked}
         />
       ))}
     </div>

@@ -14,7 +14,7 @@ export default function CreatePost() {
     e.preventDefault();
     try {
       console.log("POST to server");
-      const response = await fetch("http://localhost:5000/api/posts", {
+      const response = await fetch("https://api.codewiththura.com/api/posts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

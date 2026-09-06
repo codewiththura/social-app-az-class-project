@@ -7,7 +7,7 @@ export default function DetailPost() {
   const { id } = useParams();
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/posts/${id}`)
+    fetch(`https://api.codewiththura.com/api/posts/${id}`)
       .then((response) => response.json())
       .then((result) => {
         setPost(result);

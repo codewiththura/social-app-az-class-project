@@ -1,18 +1,51 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 
-function PostCard({ id, title, description, imageUrl, showDetailsLink }) {
-  const [likes, setLikes] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
+function PostCard({
+  id,
+  title,
+  description,
+  imageUrl,
+  showDetailsLink,
+  likeCounts,
+  initialIsLiked,
+}) {
+  const [likes, setLikes] = useState(likeCounts);
+  const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [isSaved, setIsSaved] = useState(false);
 
-  function handleLike() {
+  // console.log("likes, isLike", likes, isLiked);
+  // console.log("likeCounts, initialIsLiked", likeCounts, initialIsLiked);
+
+  useEffect(() => {
+    setLikes(likeCounts);
+    setIsLiked(initialIsLiked);
+  }, [likeCounts, initialIsLiked]);
+
+  async function updatePostLikes() {
+    const response = await fetch(
+      `https://api.codewiththura.com/api/posts/${id}/like`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) return null;
+    return await response.json();
+  }
+
+  async function handleLike() {
     if (isLiked) {
       setLikes(likes - 1);
       setIsLiked(false);
+      await updatePostLikes();
     } else {
       setLikes(likes + 1);
       setIsLiked(true);
+      await updatePostLikes();
     }
   }
 
