@@ -223,3 +223,91 @@ social-app/
 ├── vite.config.js
 └── README.md
 ```
+
+---
+
+# API Documentation
+
+စမ်းသပ်အသုံးပြုရန် Base URL: `[https://api.codewiththura.com/](https://api.codewiththura.com/)`
+
+> **ဥပမာ -** Post တွေကို ရယူလိုပါက:
+> `GET [https://api.codewiththura.com/api/posts](https://api.codewiththura.com/api/posts)`
+
+---
+
+### Authentication
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/api/auth/register` | Register a new user account |
+| `POST` | `/api/auth/login` | Log in to user account |
+| `GET` | `/api/auth/me` | Fetch currently authenticated user info |
+| `POST` | `/api/auth/logout` | Log out active user session |
+
+---
+
+### Posts
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/posts` | Get all posts (can filter by `userId` query param) |
+| `GET` | `/api/posts/:id` | Get a specific post by ID |
+| `POST` | `/api/posts` | Create a new post |
+| `PUT` | `/api/posts/:id` | Update an existing post |
+| `DELETE` | `/api/posts/:id` | Delete a post and its comments |
+| `POST` | `/api/posts/:id/archive` | Archive or unarchive a post |
+| `POST` | `/api/posts/:id/like` | Like or unlike a post |
+| `POST` | `/api/posts/:id/save` | Save or unsave a post |
+
+---
+
+### Comments
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/posts/:postId/comments` | Get comments for a specific post |
+| `POST` | `/api/posts/:postId/comments` | Add a comment to a specific post |
+
+---
+
+### Photo Uploads
+
+* **Upload Profile Picture:**
+* `POST /api/users/:id/photo`
+* *Aliases:* `/api/users/:id/avatar`, `/api/upload/user/:id`
+
+
+* **Upload Post Picture:**
+* `POST /api/posts/:id/photo`
+* *Aliases:* `/api/posts/:id/image`, `/api/upload/post/:id`
+
+
+
+---
+
+### Users
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/users` | Get all users |
+| `GET` | `/api/users/:id` | Get a specific user by ID |
+| `PUT` | `/api/users/:id` | Update a user's profile |
+| `DELETE` | `/api/users/:id` | Delete a user |
+
+---
+
+### Demo Accounts
+
+| Email | Password |
+| --- | --- |
+| `thura@example.com` | `password123` |
+| `maythin@example.com` | `password123` |
+
+
+
+
+
+
+
+
+
